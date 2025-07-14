@@ -1,4 +1,4 @@
-package ai.tx.knowledge.center.service;
+package ai.tx.knowledge.center.common;
 
 
 import ai.tx.knowledge.center.entity.ChatEntity;

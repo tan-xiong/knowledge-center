@@ -1,9 +1,8 @@
 package ai.tx.knowledge.center.config;
 
-import ai.tx.knowledge.center.service.ChatStorageMemory;
+import ai.tx.knowledge.center.common.ChatStorageMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -35,7 +34,7 @@ public class AssistantChatConfig {
         return ChatClient.builder(chatModel)
                 .defaultSystem(systemPrompt)
                 .defaultAdvisors(
-                        new QuestionAnswerAdvisor(vectorStore),
+//                        new QuestionAnswerAdvisor(vectorStore),
                         MessageChatMemoryAdvisor.builder(chatMemory).build()
                 )
                 .build();

@@ -68,39 +68,6 @@ cd knowledge-center
 - **TopK检索**：返回最相关的K个结果
 - **多维度搜索**：支持标题、内容、标签等多维度检索
 
-## 🛠️ 开发指南
-
-### 项目结构
-
-```
-src/main/java/ai/tx/knowledge/center/
-├── config/                   # 配置类
-│   ├── AssistantChatConfig.java    # AI聊天配置
-│   ├── ChatStorageMemory.java      # 记忆存储实现
-│   └── RedisConfig.java            # Redis配置
-├── controller/               # 控制器
-│   ├── KnowledgeChatController.java    # 聊天API
-│   └── KnowledgeFileController.java    # 文档API
-├── service/                  # 服务层
-│   └── DocumentProcessService.java     # 文档处理服务
-├── entity/                   # 实体类
-│   └── ChatEntity.java            # 聊天实体
-└── KnowledgeCenterApplication.java  # 主启动类
-``
-### 自定义开发
-
-#### 添加新的文档处理器
-
-```java
-@Component
-public class CustomDocumentProcessor {
-    
-    public List<Document> processDocument(Resource resource) {
-        // 自定义文档处理逻辑
-        return documents;
-    }
-}
-```
 
 ## 🚀 功能规划
 - [✅] 基础智能对话系统

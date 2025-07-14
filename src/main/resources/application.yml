@@ -2,6 +2,17 @@ spring:
   application:
     name: knowledge_center
 
+  datasource:
+    url: jdbc:mysql://localhost:3306/knowledge_center?useUnicode=true&characterEncoding=UTF8&zeroDateTimeBehavior=convertToNull&serverTimezone=GMT%2b8&useSSL=false
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: root
+    password: 123456
+  jpa:
+    open-in-view: false
+    show-sql: false
+    properties.hibernate.ddl-auto: none
+    properties.hibernate.dialect: org.hibernate.dialect.MySQLDialect
+
   # 文件上传配置
   servlet:
     multipart:
@@ -11,7 +22,7 @@ spring:
 
   ai:
     dashscope:
-      api-key: XXX
+      api-key: xxxx
       chat:
         options:
           model: qwen-plus
@@ -22,7 +33,7 @@ spring:
     vectorstore:
       milvus:
         client:
-          host: XXX # default: localhost
+          host: localhost # default: localhost
           port: 19530 # default: 19530
           username: milvus # default: root
           password: milvus # default: milvus
@@ -139,7 +150,7 @@ assistant:
     - 专业而友好，保持适当的正式度
     - 逻辑清晰，条理分明
     - 语言简洁，避免冗余
-    - 适应用户的专业水平调整表达方式
+    - 适应用户的专业水平调整表达方
     
     ### 回答结构：
     1. **直接回答**：首先回应用户的核心问题
