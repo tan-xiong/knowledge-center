@@ -18,6 +18,7 @@ public class Documents {
     private String category;
 
     public void genId(){
+        // 后续改为雪花算法
         this.id= UUID.randomUUID().toString(true);
     }
 
