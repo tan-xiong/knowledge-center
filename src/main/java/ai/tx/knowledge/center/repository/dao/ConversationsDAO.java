@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ConversationsDAO extends JpaRepository<ConversationsDO, String> {
+
+    ConversationsDO findByConversationId(String conversationId);
 }

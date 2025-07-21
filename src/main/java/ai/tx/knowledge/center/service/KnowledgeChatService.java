@@ -1,13 +1,12 @@
 package ai.tx.knowledge.center.service;
 
+import ai.tx.knowledge.center.entity.Conversations;
 import ai.tx.knowledge.center.entity.Documents;
-import ai.tx.knowledge.center.repository.ChatMessagesRepository;
 import ai.tx.knowledge.center.repository.ConversationsRepository;
 import ai.tx.knowledge.center.repository.DocumentsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -15,9 +14,11 @@ import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.Objects;
 
 import static org.springframework.ai.chat.client.advisor.vectorstore.VectorStoreChatMemoryAdvisor.TOP_K;
 import static org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID;
@@ -34,7 +35,7 @@ public class KnowledgeChatService {
     private ChatClient chatClient;
 
     @Autowired
-    private ChatMemory chatMemory;
+    private ChatStorageMemory chatMemory;
 
     @Autowired
     private VectorStore vectorStore;
@@ -45,9 +46,8 @@ public class KnowledgeChatService {
     @Autowired
     private ConversationsRepository conversationsRepository;
 
-    @Autowired
-    private ChatMessagesRepository chatMessagesRepository;
 
+    @Transactional(rollbackFor = Exception.class)
     public Flux<String> chat(String conversationId,String userMessage,String category){
 
         List<Documents> documents = documentsRepository.findByCategory(category);
@@ -56,11 +56,22 @@ public class KnowledgeChatService {
         FilterExpressionBuilder filterBuilder =  new FilterExpressionBuilder();
         Filter.Expression documentId = filterBuilder.in("documentId",documentIds.toArray()).build();
 
+        // 查询会话是否存在
+        Conversations conversations = conversationsRepository.findByConversationId(conversationId);
+        if(Objects.nonNull(conversations)){
+            // 预热会话
+            chatMemory.warmupConversation(conversationId);
+        }else{
+            //生成会话标题
+            conversations=new Conversations();
+            conversations.createConversations(conversationId,userMessage,category);
+        }
+
         // 历史消息列表
         List<Message> historyMessage = chatMemory.get(conversationId);
 
         // 发起聊天请求并处理响应
-        return chatClient.prompt()
+        Flux<String> chat = chatClient.prompt()
                 .messages(historyMessage)
                 .user(userMessage)
                 .advisors(a -> a.param(CONVERSATION_ID, conversationId).param(TOP_K, 100))
@@ -70,10 +81,19 @@ public class KnowledgeChatService {
                         .build())
                 .stream()
                 .content()
+                .doOnComplete(() -> {
+                    // 7. 聊天完成后，强制同步到持久化存储
+                    log.info("聊天完成，强制同步会话: {}", conversationId);
+                    chatMemory.forceSync(conversationId);
+                })
                 .onErrorResume(throwable -> {
                     log.error("聊天服务异常", throwable);
                     return Flux.just("聊天服务暂时不可用，请稍后重试。");
                 });
+
+
+        conversationsRepository.save(conversations);
+        return chat;
 
     }
 
@@ -85,5 +105,7 @@ public class KnowledgeChatService {
     public void clearMessage(String conversationId){
         chatMemory.clear(conversationId);
     }
+
+
 
 }

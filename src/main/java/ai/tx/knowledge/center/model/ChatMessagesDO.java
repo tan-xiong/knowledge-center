@@ -1,6 +1,5 @@
 package ai.tx.knowledge.center.model;
 
-import ai.tx.knowledge.center.enums.MessageType;
 import jakarta.persistence.*;
 import lombok.Data;
 

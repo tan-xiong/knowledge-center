@@ -1,6 +1,6 @@
 package ai.tx.knowledge.center.config;
 
-import ai.tx.knowledge.center.common.ChatStorageMemory;
+import ai.tx.knowledge.center.service.ChatStorageMemory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -40,8 +40,8 @@ public class AssistantChatConfig {
                 .build();
     }
 
-    @Bean
+/*    @Bean
     public ChatMemory chatMemory(RedisTemplate<String, Object> redisTemplate) {
         return new ChatStorageMemory(redisTemplate);
-    }
+    }*/
 }

@@ -27,8 +27,6 @@ public class ConversationsDO {
     @Enumerated(EnumType.STRING)
     private ConversationsStatus status = ConversationsStatus.ACTIVE;
 
-    private Integer messageCount;
-
     private Date lastMessageAt;
 
     private Date createdAt;
