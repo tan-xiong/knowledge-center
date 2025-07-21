@@ -1,7 +1,7 @@
 package ai.tx.knowledge.center.controller;
 
 import ai.tx.knowledge.center.common.Result;
-import ai.tx.knowledge.center.common.ResultCode;
+import ai.tx.knowledge.center.enums.ResultCode;
 import ai.tx.knowledge.center.dto.DocumentsDTO;
 import ai.tx.knowledge.center.entity.Documents;
 import ai.tx.knowledge.center.service.KnowledgeFileService;

@@ -1,6 +1,8 @@
 package ai.tx.knowledge.center.service;
 
 import ai.tx.knowledge.center.entity.Documents;
+import ai.tx.knowledge.center.repository.ChatMessagesRepository;
+import ai.tx.knowledge.center.repository.ConversationsRepository;
 import ai.tx.knowledge.center.repository.DocumentsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
@@ -39,6 +41,12 @@ public class KnowledgeChatService {
 
     @Autowired
     private DocumentsRepository documentsRepository;
+
+    @Autowired
+    private ConversationsRepository conversationsRepository;
+
+    @Autowired
+    private ChatMessagesRepository chatMessagesRepository;
 
     public Flux<String> chat(String conversationId,String userMessage,String category){
 

@@ -1,7 +1,7 @@
 package ai.tx.knowledge.center.controller;
 
 import ai.tx.knowledge.center.common.Result;
-import ai.tx.knowledge.center.common.ResultCode;
+import ai.tx.knowledge.center.enums.ResultCode;
 import ai.tx.knowledge.center.service.KnowledgeChatService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

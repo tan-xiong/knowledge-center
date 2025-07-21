@@ -1,5 +1,6 @@
 package ai.tx.knowledge.center.common;
 
+import ai.tx.knowledge.center.enums.ResultCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -23,7 +24,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Result<Void> handleMissingParameter(MissingServletRequestParameterException e) {
         log.warn("请求参数缺失: {}", e.getMessage());
-        return Result.error(ResultCode.BAD_REQUEST.getCode(), 
+        return Result.error(ResultCode.BAD_REQUEST.getCode(),
             "缺少必要参数: " + e.getParameterName());
     }
 

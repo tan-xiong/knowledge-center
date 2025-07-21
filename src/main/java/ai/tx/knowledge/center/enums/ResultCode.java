@@ -1,8 +1,11 @@
-package ai.tx.knowledge.center.common;
+package ai.tx.knowledge.center.enums;
+
+import lombok.Getter;
 
 /**
  * 响应状态码枚举
  */
+@Getter
 public enum ResultCode {
     
     // 成功
@@ -30,13 +33,5 @@ public enum ResultCode {
     ResultCode(Integer code, String message) {
         this.code = code;
         this.message = message;
-    }
-    
-    public Integer getCode() {
-        return code;
-    }
-    
-    public String getMessage() {
-        return message;
     }
 } 

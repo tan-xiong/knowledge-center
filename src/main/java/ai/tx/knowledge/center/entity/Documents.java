@@ -4,12 +4,14 @@ package ai.tx.knowledge.center.entity;
 import cn.hutool.core.lang.UUID;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @author tanxiong
  * @date 2025/7/14 9:58
  */
 @Data
-public class Documents {
+public class Documents implements Serializable {
 
     private String id;
 
