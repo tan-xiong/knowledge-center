@@ -1,8 +1,7 @@
 package ai.tx.knowledge.center.entity;
 
+import ai.tx.knowledge.center.common.IdUtils;
 import ai.tx.knowledge.center.enums.ConversationsStatus;
-import cn.hutool.core.lang.UUID;
-import jakarta.persistence.*;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -33,20 +32,25 @@ public class Conversations implements Serializable {
 
     private Date updatedAt;
 
+    /**
+     * 生成唯一ID
+     */
     public void genId() {
-        // 后续改为雪花算法
-        this.id = UUID.randomUUID().toString(true);
+        this.id = IdUtils.generateId();
     }
 
-   public Conversations createConversations(String conversationId,String userMessage,String category){
-       this.genId();
-       this.conversationId=conversationId;
-       this.status = ConversationsStatus.ACTIVE;
-       this.title=generateConversationTitle(userMessage);
-       this.category = category;
-       this.userId="default";
-       return this;
-   }
+    /**
+     * 创建对话实例
+     */
+    public Conversations createConversations(String conversationId, String userMessage, String category) {
+        this.genId();
+        this.conversationId = conversationId;
+        this.status = ConversationsStatus.ACTIVE;
+        this.title = generateConversationTitle(userMessage);
+        this.category = category;
+        this.userId = "default";
+        return this;
+    }
 
     /**
      * 生成对话标题

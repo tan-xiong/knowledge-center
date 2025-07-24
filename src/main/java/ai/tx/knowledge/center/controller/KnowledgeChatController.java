@@ -1,6 +1,8 @@
 package ai.tx.knowledge.center.controller;
 
 import ai.tx.knowledge.center.common.Result;
+import ai.tx.knowledge.center.entity.Conversations;
+import ai.tx.knowledge.center.enums.ConversationsStatus;
 import ai.tx.knowledge.center.enums.ResultCode;
 import ai.tx.knowledge.center.service.KnowledgeChatService;
 import org.slf4j.Logger;
@@ -103,4 +105,36 @@ public class KnowledgeChatController {
                     "清空聊天历史失败: " + e.getMessage());
         }
     }
+
+
+    /**
+     * 获取用户会话列表
+     */
+    @GetMapping("/conversations")
+    public Result<List<Conversations>> getConversations(@RequestParam(value = "status", required = false) ConversationsStatus status) {
+        try {
+            String userId = "default";
+            List<Conversations> conversations = knowledgeChatService.getUserConversations(userId, status);
+            log.info("获取用户会话列表 - userId: {}, status: {}, 数量: {}", userId, status, conversations.size());
+
+            return Result.success("获取会话列表成功", conversations);
+
+        } catch (Exception e) {
+            log.error("获取会话列表失败", e);
+            return Result.error(ResultCode.CHAT_ERROR.getCode(),
+                    "获取会话列表失败: " + e.getMessage());
+        }
+    }
+
+
+    /**
+     * 删除会话
+     */
+    @DeleteMapping("/conversations/{conversationId}")
+    public Result<Void> deleteConversation(
+            @PathVariable("conversationId") String conversationId) {
+        knowledgeChatService.deleteConversation(conversationId);
+        return Result.success();
+    }
+
 }

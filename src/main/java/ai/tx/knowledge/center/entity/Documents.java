@@ -1,7 +1,6 @@
 package ai.tx.knowledge.center.entity;
 
-
-import cn.hutool.core.lang.UUID;
+import ai.tx.knowledge.center.common.IdUtils;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -19,10 +18,11 @@ public class Documents implements Serializable {
 
     private String category;
 
-    public void genId(){
-        // 后续改为雪花算法
-        this.id= UUID.randomUUID().toString(true);
+    /**
+     * 生成唯一ID
+     */
+    public void genId() {
+        this.id = IdUtils.generateId();
     }
-
 
 }

@@ -1,7 +1,6 @@
 package ai.tx.knowledge.center.service;
 
 
-import ai.tx.knowledge.center.entity.ChatEntity;
 import ai.tx.knowledge.center.entity.ChatMessages;
 import ai.tx.knowledge.center.repository.ChatMessagesRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -9,17 +8,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.*;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -39,15 +42,15 @@ public class ChatStorageMemory implements ChatMemory {
     @Override
     public void add(String conversationId, List<Message> messages) {
         String key = KEY_PREFIX + conversationId;
-        List<ChatEntity> listIn = new ArrayList<>();
+        List<ChatMessages> listIn = new ArrayList<>();
         for (Message msg : messages) {
             String[] strs = msg.getText().split("</think>");
             String text = strs.length == 2 ? strs[1] : strs[0];
 
-            ChatEntity ent = new ChatEntity();
-            ent.setChatId(conversationId);
-            ent.setType(msg.getMessageType().getValue());
-            ent.setText(text);
+            ChatMessages ent = new ChatMessages();
+            ent.setConversationId(conversationId);
+            ent.setMessageType(msg.getMessageType());
+            ent.setContent(text);
             listIn.add(ent);
         }
         redisTemplate.opsForList().rightPushAll(key, listIn.toArray());
@@ -67,13 +70,13 @@ public class ChatStorageMemory implements ChatMemory {
         List<Message> listOut = new ArrayList<>();
         ObjectMapper objectMapper = new ObjectMapper();
         for (Object obj : listTmp) {
-            ChatEntity chat = objectMapper.convertValue(obj, ChatEntity.class);
-            if (MessageType.USER.getValue().equals(chat.getType())) {
-                listOut.add(new UserMessage(chat.getText()));
-            } else if (MessageType.ASSISTANT.getValue().equals(chat.getType())) {
-                listOut.add(new AssistantMessage(chat.getText()));
-            } else if (MessageType.SYSTEM.getValue().equals(chat.getType())) {
-                listOut.add(new SystemMessage(chat.getText()));
+            ChatMessages chat = objectMapper.convertValue(obj, ChatMessages.class);
+            if (MessageType.USER.equals(chat.getMessageType())) {
+                listOut.add(new UserMessage(chat.getContent()));
+            } else if (MessageType.ASSISTANT.equals(chat.getMessageType())) {
+                listOut.add(new AssistantMessage(chat.getContent()));
+            } else if (MessageType.SYSTEM.equals(chat.getMessageType())) {
+                listOut.add(new SystemMessage(chat.getContent()));
             }
         }
         return listOut;
@@ -105,23 +108,69 @@ public class ChatStorageMemory implements ChatMemory {
 
 
     /**
-     * 强制同步会话到持久化存储
+     * 强制同步会话到持久化存储（改进版：基于内容hash的幂等同步）
      */
     @Transactional(rollbackFor = Exception.class)
     public void forceSync(String conversationId) {
-        List<Message> messages = this.get(conversationId);
-        if (!CollectionUtils.isEmpty(messages)) {
-            log.info("强制同步会话: conversationId={}, messageCount={}", conversationId, messages.size());
-            try {
-                List<ChatMessages> chatMessages = messages.stream()
-                        .map(msg -> convertSpringAIMessageToChatMessage(conversationId, msg))
-                        .collect(Collectors.toList());
+        List<Message> redisMessages = this.get(conversationId);
+        if (CollectionUtils.isEmpty(redisMessages)) {
+            return;
+        }
 
-                chatMessagesRepository.saveAll(chatMessages);
+        // 1. 获取数据库中已有的消息
+        List<ChatMessages> dbMessages = chatMessagesRepository.findByConversationId(conversationId);
+        
+        // 2. 构建已存在消息的内容hash集合（用于去重）
+        Set<String> existingContentHashes = dbMessages.stream()
+                .map(ChatMessages::getContentHash)
+                .filter(hash -> hash != null && !hash.isEmpty())
+                .collect(Collectors.toSet());
 
-            } catch (Exception e) {
-                log.error("强制同步失败: conversationId={}, error={}", conversationId, e.getMessage(), e);
+        log.info("同步检查: conversationId={}, Redis消息数={}, 数据库消息数={}", 
+                conversationId, redisMessages.size(), dbMessages.size());
+
+        // 3. 过滤出真正需要保存的新消息
+        List<ChatMessages> newChatMessages = new ArrayList<>();
+        int newMessageCount = 0;
+        
+        for (Message redisMsg : redisMessages) {
+            String contentHash = generateContentHash(redisMsg.getText(), redisMsg.getMessageType().toString());
+            
+            // 如果消息内容hash不存在于数据库中，则为新消息
+            if (!existingContentHashes.contains(contentHash)) {
+                ChatMessages chatMessage = convertSpringAIMessageToChatMessage(conversationId, redisMsg);
+                newChatMessages.add(chatMessage);
+                newMessageCount++;
             }
+        }
+
+        // 4. 批量保存新消息
+        if (!newChatMessages.isEmpty()) {
+            chatMessagesRepository.saveAll(newChatMessages);
+            log.info("增量同步完成: conversationId={}, 新增消息数={}", conversationId, newMessageCount);
+        } else {
+            log.debug("消息已同步，无需操作: conversationId={}", conversationId);
+        }
+    }
+
+    /**
+     * 生成消息内容的唯一hash（用于去重）
+     */
+    private String generateContentHash(String content, String messageType) {
+        try {
+            String input = messageType + ":" + content;
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] hashBytes = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            
+            // 转换为16进制字符串
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            log.warn("MD5算法不可用，使用hashCode替代", e);
+            return messageType + ":" + content.hashCode();
         }
     }
 
@@ -140,6 +189,10 @@ public class ChatStorageMemory implements ChatMemory {
         } else if (message instanceof SystemMessage) {
             chatMessage.setMessageType(MessageType.SYSTEM);
         }
+        
+        // 设置内容hash（用于去重）
+        chatMessage.setContentHash(generateContentHash(message.getText(), message.getMessageType().toString()));
+        
         return chatMessage;
     }
 

@@ -2,6 +2,7 @@ package ai.tx.knowledge.center.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.ai.chat.messages.MessageType;
 
 import java.time.LocalDateTime;
 
@@ -24,6 +25,7 @@ public class ChatMessagesDO {
 
     private String content;
 
+    private String contentHash;
 
     private Integer tokenCount;
 

@@ -1,6 +1,6 @@
 package ai.tx.knowledge.center.entity;
 
-import cn.hutool.core.lang.UUID;
+import ai.tx.knowledge.center.common.IdUtils;
 import lombok.Data;
 import org.springframework.ai.chat.messages.MessageType;
 
@@ -22,14 +22,17 @@ public class ChatMessages implements Serializable {
 
     private String content;
 
+    private String contentHash;
 
     private Integer tokenCount;
 
     private LocalDateTime createdAt;
 
+    /**
+     * 生成唯一ID
+     */
     public void genId() {
-        // 后续改为雪花算法
-        this.id = UUID.randomUUID().toString(true);
+        this.id = IdUtils.generateId();
     }
 
 }

@@ -18,6 +18,8 @@ public class ConversationsDO {
     @Id
     private String id;
 
+    private String conversationId;
+
     private String userId;
 
     private String title;

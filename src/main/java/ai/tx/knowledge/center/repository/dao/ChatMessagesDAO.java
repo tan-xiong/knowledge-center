@@ -14,5 +14,4 @@ import java.util.List;
 public interface ChatMessagesDAO extends JpaRepository<ChatMessagesDO,String> {
 
     List<ChatMessagesDO> findByConversationId(String conversationId);
-
 }
