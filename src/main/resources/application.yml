@@ -167,3 +167,21 @@ assistant:
     
     ## 执行指引
     基于RIPER-5框架，深入理解用户问题，利用上下文信息，提供专业、准确、实用的回答。始终保持专业性、准确性和安全性，为用户创造最大价值。
+
+# 文档切分配置
+rag:
+  chunking:
+    # 目标chunk大小（字符数）
+    target-size: 800
+    # 最大chunk大小（字符数）
+    max-size: 1200
+    # 最小chunk大小（字符数）
+    min-size: 200
+    # 重叠大小（字符数）
+    overlap-size: 150
+    # 句子边界检测模式：strict(严格)/relaxed(宽松)
+    sentence-boundary-mode: strict
+    # 是否启用内容哈希作为chunk ID
+    enable-content-hash: true
+    # 是否保留文档结构信息
+    preserve-structure: true
